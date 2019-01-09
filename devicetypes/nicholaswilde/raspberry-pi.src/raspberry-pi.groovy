@@ -44,6 +44,8 @@ metadata {
         capability "Actuator"
         capability "Contact Sensor"
         
+        attribute "doorSensors", "string"
+        attribute "motionSensors", "string"
         attribute "cpuPercentage", "string"
         attribute "memory", "string"
         attribute "diskUsage", "string"
@@ -108,10 +110,34 @@ metadata {
                 [value: 96, color: "#bc2323"]
             ]
         }
-        standardTile("contact", "device.contact", width: 1, height: 1) {
+        standardTile("doorSensors", "device.doorSensors", width: 1, height: 1) {
+			state "off", label: 'Off', icon: "st.contact.contact.closed", backgroundColor: "#ffffff"
+			state "on", label: 'On', icon: "st.contact.contact.closed", backgroundColor: "#79b821"
+		}
+        standardTile("motionSensors", "device.motionSensors", width: 1, height: 1) {
+			state "off", label: 'Off', icon: "st.motion.motion.active", backgroundColor: "#ffffff"
+			state "on", label: 'On', icon: "st.motion.motion.active", backgroundColor: "#79b821"
+		}
+        /*standardTile("f_door", "device.f_door", width: 1, height: 1) {
 			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821", action: "open")
 			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e", action: "close")
 		}
+        standardTile("g_door", "device.g_door", width: 1, height: 1) {
+			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821", action: "open")
+			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e", action: "close")
+		}
+        standardTile("b_door", "device.b_door", width: 1, height: 1) {
+			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821", action: "open")
+			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e", action: "close")
+		}
+        standardTile("stairs_motion", "device.stairs_motion", width: 1, height: 1) {
+			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821", action: "open")
+			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e", action: "close")
+		}
+        standardTile("contact", "device.contact", width: 1, height: 1) {
+			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821", action: "open")
+			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e", action: "close")
+		}*/
         standardTile("restart", "device.restart", inactiveLabel: false, decoration: "flat") {
         	state "default", action:"restart", label: "Restart", displayName: "Restart"
         }
@@ -119,7 +145,7 @@ metadata {
         	state "default", action:"refresh.refresh", icon: "st.secondary.refresh"
         }
         main "button"
-        details(["button", "temperature", "cpuPercentage", "memory" , "diskUsage", "contact", "restart", "refresh"])
+        details(["button", "temperature", "cpuPercentage", "memory" , "diskUsage", "doorSensors", "motionSensors", "contact", "restart", "refresh"])//"f_door", "g_door", "b_door", "stairs_motion", 
     }
 }
 
@@ -143,6 +169,10 @@ def parse(String description) {
     	log.debug "Computer is up"
    		sendEvent(name: "switch", value: "on")
     }
+    else {
+    	sendEvent(name: "doorSensors", value: "off")
+        sendEvent(name: "motionSensors", value: "off")
+    }
     
     log.debug "check temp..."
     if (result.containsKey("cpu_temp")) {
@@ -164,6 +194,66 @@ def parse(String description) {
     	log.debug "disk_usage: ${result.disk_usage.toDouble().round()}"
         sendEvent(name: "diskUsage", value: result.disk_usage.toDouble().round())
     }
+  	if (result.containsKey("door_sensors")) {
+    	log.debug "door_sensors: ${result.door_sensors}"
+        if (result.door_sensors == "0"){
+        	log.debug "door_sensors: off"
+            sendEvent(name: "doorSensors", value: "off")
+        } else {
+        	log.debug "door_sensors: on"
+            sendEvent(name: "doorSensors", value: "on")
+        }
+    }
+  	if (result.containsKey("motion_sensors")) {
+    	log.debug "motion_sensors: ${result.motion_sensors}"
+        if (result.motion_sensors == "0"){
+        	log.debug "motion_sensors: off"
+            sendEvent(name: "motionSensors", value: "off")
+        } else {
+        	log.debug "motion_sensors: on"
+            sendEvent(name: "motionSensors", value: "on")
+        }
+    }
+  	/*if (result.containsKey("gpio_value_2")) {
+    	log.debug "gpio_value_2: ${result.gpio_value_2.toDouble().round()}"
+        if (result.gpio_value_2.contains("0")){
+        	log.debug "gpio_value_2: open"
+            sendEvent(name: "f_door", value: "open")
+        } else {
+        	log.debug "gpio_value_2: closed"
+            sendEvent(name: "f_door", value: "closed")
+        }
+    }
+    if (result.containsKey("gpio_value_3")) {
+    	log.debug "gpio_value_3: ${result.gpio_value_3.toDouble().round()}"
+        if (result.gpio_value_3.contains("0")){
+        	log.debug "gpio_value_3: open"
+            sendEvent(name: "g_door", value: "open")
+        } else {
+        	log.debug "gpio_value_3: closed"
+            sendEvent(name: "g_door", value: "closed")
+        }
+    }
+  	if (result.containsKey("gpio_value_4")) {
+    	log.debug "gpio_value_4: ${result.gpio_value_4.toDouble().round()}"
+        if (result.gpio_value_4.contains("0")){
+        	log.debug "gpio_value_4: open"
+            sendEvent(name: "b_door", value: "open")
+        } else {
+        	log.debug "gpio_value_4: closed"
+            sendEvent(name: "b_door", value: "closed")
+        }
+    }
+  	if (result.containsKey("gpio_value_7")) {
+    	log.debug "gpio_value_7: ${result.gpio_value_7.toDouble().round()}"
+        if (result.gpio_value_7.contains("0")){
+        	log.debug "gpio_value_7: open"
+            sendEvent(name: "stairs_motion", value: "open")
+        } else {
+        	log.debug "gpio_value_7: closed"
+            sendEvent(name: "stairs_motion", value: "closed")
+        }
+    }
   	if (result.containsKey("gpio_value_17")) {
     	log.debug "gpio_value_17: ${result.gpio_value_17.toDouble().round()}"
         if (result.gpio_value_17.contains("0")){
@@ -173,7 +263,7 @@ def parse(String description) {
         	log.debug "gpio_value_17: closed"
             sendEvent(name: "contact", value: "closed")
         }
-    }
+    }*/
   	
 }
 
